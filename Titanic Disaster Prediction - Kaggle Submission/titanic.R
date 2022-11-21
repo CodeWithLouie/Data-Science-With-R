@@ -1,307 +1,313 @@
+# Predicting Survivability Using RandomForest
+# First thing first, let's load the readr and dplyr package
 
-# the titanic dataset
-# predicting the chances a passenger would survive/perish
-# load dataset
-
-library(dplyr)
 library(readr)
+library(dplyr)
+library(ggplot2)
 
-test <- read_csv("test.csv")
+# The Train data and Test Data
+
+# We begin by importing the datasets needed for this analysis
+
+# import the train data
+
 train <- read_csv("train.csv")
 
-# add a survived variables to the test data 
+# import the test data
 
-test_combined <- test %>% 
-  mutate(Survived = rep("none", nrow(test)))
+test <- read_csv("test.csv")
 
-# combine the test_combined and the train dataset 
+# We are going to be training the `train` data and
+# then run the prediction on the `test` data.
 
-train_test_combined <- rbind(train, test_combined)
+head(train)
 
-# changing class of variables
+# examine the structure
+
+glimpse(train)
+
+# Add a new Survived column to the `test` data.
+# add a column using mutate and save as a new variable
+
+test.survived <- test %>% 
+  mutate(
+    Survived = rep("none", nrow(test))
+)
+
+head(test.survived)
+
+ 
+# Join the `train` and `test.survived` datasets
+
+train.test <- rbind(train, test.survived)
+
+head(train.test)
+ 
+# Converting columns to the appropriate class.
+# Convert Sex, Pclass, Sex, Survived, SibSp, Parch, Embrked to factors
 # check the structure 
 
-glimpse(train_test_combined)
+# create a function to convert variable class
 
-train_test_combined$Pclass <- as.factor(train_test_combined$Pclass)
-train_test_combined$Sex <- as.factor(train_test_combined$Sex)
+convert_func <- function(x) {
+  x <- as.factor(x)
+}
 
-train_test_combined$Survived <- as.factor(train_test_combined$Survived)
+glimpse(train.test)
 
-glimpse(train_test_combined)
+# use the function to convert variables
 
-# take a look at count of survived
+train.test <- train.test %>% 
+  mutate(
+    Pclass = convert_func(Pclass),
+    Sex = convert_func(Sex),
+    Survived = convert_func(Survived),
+    Parch = convert_func(Parch),
+    SibSp = convert_func(SibSp),
+    Embarked = convert_func(Embarked)
+  )
 
-train_test_combined %>% 
+glimpse(train.test)
+ 
+
+# Exploratory Data Analysis
+
+# Let's see the total number of people that survived
+# or perish from the `train.test` data.
+
+train.test %>% 
   count(Survived)
+ 
 
-# distribution of passenger class
+# They are 549 victims and 342 survivor from the `train` data. the 
+# "none" paramenter is from the newly created survived column in the `test` data.
 
-train_test_combined %>% 
+# Let's explore the data some more
+
+train.test %>% 
   count(Pclass)
 
-# visualise Pclass to make sense of the distribution
-# load ggplot2
+summary(train.test$Sex)
 
-library(ggplot2)
-library(ggthemes)
+summary(train.test$SibSp)
 
-ggplot(train, aes(Pclass, fill = factor(Survived))) +
+summary(train.test$Parch)
+
+summary(train.test$Age)
+ 
+
+# Visualising the predictive behavior of each variable
+
+ggplot(train.test[1:890, ], aes(Pclass)) + 
+  geom_bar() +
+  ggtitle("Pclass Distribution")
+ 
+# There are more passengers in third class than any other class
+
+ggplot(train.test[1:890, ], aes(Pclass, fill = factor(Survived))) +
   geom_bar() +
   xlab("Passenger Class") + 
   labs(fill = "Survived") +
-  ggtitle("Survival Count Across Passenger Class") +
-  theme_clean()
-  
+  ggtitle("Pclass and Survived")
+ 
+# Third class has the highest number of casualties.
 
-# Examine the first few names of the train dataset
+ggplot(train.test[1:890, ], aes(Age))+
+  geom_histogram() +
+  ggtitle("Age Distribution")
+ 
+# The Age distribution is more clusterd around 20-40 years.
+# According to the data, children are more than likely to survive than adult.
+# We will visualise this hypothesis next but only for exploration.
 
-glimpse(train$Name)
-head(train$Name)
+ggplot(train.test[1:891, ], aes(Age, fill = Survived)) + 
+  geom_histogram() +
+  ggtitle("Age and survived")
+ 
 
-# how many unique name do we have across the dataset 
+# Aha! Age is a good predictor. In addition to age, we want to look 
+# at the distribution of sex and whether it is also a good predictor.
 
-length(unique(train_test_combined$Name))
+ggplot(train.test[1:891, ], aes(Sex)) +
+  geom_bar() +
+  ggtitle("Sex Distribution")
+ 
+# More males onboard than female.
 
-# 1307 of 1309 obs are unique?
-# check for duplicate names 
+ggplot(train.test[1:891, ], aes(Sex, fill = Survived)) +
+  geom_bar() +
+  ggtitle("Sex and Survived")
+ 
+# Oops! A large chunk of males onboard perished.
 
-dup_name <- train_test_combined %>% 
-  filter(duplicated(Name))
+##### Multi-variate exploration
 
-# A look at the titles attached to names
-# is title correlated with the SibSp variable? 
-# load the stringr package: time to detect some strings
+ggplot(train.test[1:891, ], aes(Age, fill = Survived)) +
+  geom_histogram() + 
+  facet_wrap(~ Pclass) +
+  ggtitle("Age by Pclass and Survived")
 
-library(stringr)
+# Interesting plot! survival decreases as age increases.
 
-misses <- train_test_combined %>% 
-  filter(str_detect(Name, "Miss"))
+# The SibSp and Parch Variable
 
-# interesting! they are 206 obs with the title of Miss.  
-# Let's take a look at the first few rows
+# SipSp is the number of siblings or spouses traveling together. 
+# Parch shows whether a passenger is travelling with a parent or partner.
 
-head(misses, 5)
+# **Question: Does a passenger travelling alone has a
+# higher chance of survival?**
 
-# Miss is a title used for unmarried females
-# hypothesis: does the titles correlate with age? 
-# detect for Mrs. in the combined data
+# To answer this, we will be looking at the distribution of each variable.
 
-mrs <- train_test_combined %>% 
-  filter(str_detect(Name, "Mrs"))
+ggplot(train.test[1:891, ], aes(SibSp)) +
+  geom_bar() +
+  ggtitle("SibSp Distribution")
+ 
+# Let's add the survival rate
 
-# 201 obs for Mrs.
-# Let's take a look
+ggplot(train.test[1:891, ], aes(SibSp, fill = Survived)) +
+  geom_bar() +
+  ggtitle("SibSp and Survived")
 
-head(mrs, 5)
+# Survival rate decreases as number of people travelling together increases.
 
-# check out males to see if patterns continue 
+ggplot(train.test[1:891, ], aes(Parch)) +
+  geom_bar() +
+  ggtitle("Parch Distribution")
+ 
+# Hmm! looks like the same pattern. next...
 
-males <- train_test_combined %>% 
-  filter(Sex == "male") 
+ggplot(train.test[1:891, ], aes(Parch, fill = Survived)) +
+  geom_bar() +
+  ggtitle("Parch and Survived")
 
-summary(males) 
+ 
+## Feature Engineering
 
-head(males, 5)
+### Adult Child Age Group
 
-# create a title extraction function to expand the relationship between
-# Pclass and Survived 
+# Creating a Child and Adult Variable from the `train.test` data.
 
-Title_func <- function(name) {
+# create a childadult_function 
+
+chAdult_func <- function(x) {
   case_when(
-    str_detect(name, "Miss.") ~ "Miss.",
-    str_detect(name, "Mrs.") ~ "Mrs.",
-    str_detect(name, "Mr.") ~ "Mr.",
-    str_detect(name, "Master.") ~ "Master",
-    TRUE ~ "other"
+    x <= 15 ~ "Child", TRUE ~ "Adult"
   )
 }
 
-# create a null vector. 
+Adult_Child <- NULL #create a null file
 
-titles <- NULL
-
-for (i in 1:nrow(train_test_combined)) {
-  titles <- c(titles, Title_func(train_test_combined[i, "Name"]))
+for (i in 1:nrow(train.test)) {
+  Adult_Child <- c(Adult_Child, chAdult_func(train.test[i, "Age"]))
 }
 
-train_test_combined <- train_test_combined %>% 
-  mutate(Title = titles) %>% 
-  select(Title, Name, Sex, Age, everything())
+# create a new column and add the Adult_Child vector
 
-# visualise the title variable by Pclass
+train.test <- train.test %>% 
+  mutate(Age_group = Adult_Child)
 
-ggplot(train_test_combined[1:890,], aes(Title, fill = Survived)) +
+# call summary on the new variable
+
+table(train.test$Age_group)
+ 
+
+# Visualise the distribution across Pclass
+
+ggplot(train.test[1:891, ], aes(Age_group, fill = Survived)) +
   geom_bar() +
   facet_wrap(~ Pclass) +
-  labs(title = "Pclass", x = "Title", y = "Total Count", subtitle = "
-       cumulative survival rate by title and passenger class", fill =
-         "Survived") +
-  theme_clean()
-   
+  ggtitle("Age Group Survival Across Pclass")
+ 
 
-# what is the distribution of females to males in the combined data
+# Wow! this shows us more prediction than the age.
 
-summary(train_test_combined$Sex)
+# Let's see the above chart with the Parch Var before we 
+# move on to create another variables.
 
-# visualise the relationship between sex and survival rate by Pclass
-
-ggplot(train, aes(factor(Sex), fill = factor(Survived))) +
+ggplot(train.test[1:891, ], aes(Age_group, fill = Survived)) +
   geom_bar() +
-  facet_wrap(~ Pclass) +
-  xlab("Sex") +
-  ylab("Survival count") +
-  ggtitle("Pclass") +
-  labs(fill = "Survived") +
-  theme_classic()
-  
+  facet_wrap(~ Pclass ~ SibSp) +
+  ggtitle("Age Group Survival by SibSp Across Pclass")
 
-# bring it all together
-# age is an important factor here, so let's get a summary of age
+# Ouch! the pattern seems to be hard to read. Since both SIbSp 
+# and Parch shows the number of dependent/spouse/siblings/parents/
+# guardians traveling together, we will use this
+# information to create a new **Family_Size** variable.
 
-summary(train_test_combined$Age)
+# create a vector of the sibsp and parch variable and add them together
 
-# 263 missing values for age?
+train.temp <- c(train$SibSp, test$SibSp)
+test.temp <- c(test$Parch, train$Parch)        
 
-summary(train$Age)
-summary(test$Age)
+train.test <- train.test %>% 
+  mutate(Family_size = as.factor(train.temp + test.temp + 1))
 
-# most of the missing values are in the train data
-# visualise age and survival rate by and Sex Pclass
+# Relationship between Age group, Family Size and Survival rate
 
-ggplot(train, aes(Age, fill = factor(Survived))) +
-  geom_histogram(binwidth = 5) +
-  facet_wrap(~ Sex ~ Pclass) +
-  xlab("Age") + 
-  ylab("Total Count") +
-  theme_classic()
-  
+ggplot(train.test[1:891, ], aes(Age_group, fill = Survived)) +
+  geom_bar() +
+  facet_wrap(~ Family_size) +
+  ggtitle("Age vs Survived by Family Size")
+ 
 
-# confirm whether Master is a term for Male children
+## Training the RandomForest Algorithm
 
-boys <- train_test_combined %>% 
-  filter(Title == "Master")
+# Now that we have looked at the varibles with the most predictive nature,
+# we will be training our `RandomForest` algorithm with them.
 
-summary(boys$Age)  
+# load the randomforest package
 
-# male children are titled Master. the summary of boys age confirms it.
-# 8 NA's
-# Let's do the same for Misses.
+library(randomForest)
+ 
+# Let's create our label data for the `randomforest` model
+# and also our train data.
 
-girls <- train_test_combined %>% 
-  filter(titles == "Miss.")
+rf.label <- as.factor(train$Survived)
 
-summary(girls$Age)
+rf.train1 <- train.test[1:891, c("Sex", "Pclass", "Age_group", "Family_size")]
 
-# title Miss. doesn't correlate with age,
-# but it sure means an unmarried lady
-# let's visualise the Misses data to understand the age pattern
+rf.train2 <- train.test[1:891, c("Sex", "Pclass", "Age_group")]
 
-misses %>% 
-  filter(Survived != "none") %>% 
-ggplot(aes(Age, fill = Survived)) +
-  geom_histogram(binwidth = 5) +
-  facet_wrap(~ Pclass) +
-  xlab("Age") +
-  ylab("Total count") +
-  ggtitle("Pclass") 
-  
+# set the seed to 2022
 
-# let's filter misses to know whether they are traveling alone
-# also check age distribution
+set.seed(2022)
 
-misses_alone <- misses %>% 
-  filter(SibSp == 0 & Parch == 0)
+# run the model
 
-summary(misses_alone$Age)
+model <- randomForest(rf.train1, rf.label, importance = TRUE, ntree = 2022)
 
-# since the max age for boy child is around 14, let's filter for 
-# misses_alone with age lower than 14 to get the children misses
+model2 <- randomForest(rf.train2, rf.label, importance = TRUE, ntree = 2022)
 
-misses_alone %>% 
-  filter(Age < 14.5) %>% 
-  summarise(Children = n())
+# view the model accuracy
 
-# Sibsp and Parch shows the number of siblings or spouse and parents
-# It makes sense to know the survival rate by this variables
-# glimpse the two variables 
+model
 
-glimpse(train_test_combined$SibSp)
-glimpse(train_test_combined$Parch)
+model2
 
-# both are integers whereas it's a category.
-# convert to factor
+# view the model plot
 
-train_test_combined$SibSp <- as.factor(train_test_combined$SibSp)
-train_test_combined$Parch <- as.factor(train_test_combined$Parch)
+varImpPlot(model) # this has more accuracy
 
-glimpse(train_test_combined$SibSp)
-glimpse(train_test_combined$Parch)
+varImpPlot(model2)
 
-# visualise SibSp and survival rate by Pclass and title
+### Running Our Model on the Test Data
 
-train_test_combined %>% 
-  filter(Survived != "none") %>% 
-ggplot(aes(SibSp)) +
-  geom_bar(aes(fill = Survived)) +
-  facet_wrap(~ Pclass ~ Title) +
-  ylim(0,300) +
-  xlab("SibSp") +
-  ylab("Total count") +
-  ggtitle("Survival rate by SibSp, Pclass and Titles") 
-  
+set.seed(2022)
 
-# visualise the Parch variable 
+# get nrow of test data
 
-train_test_combined %>% 
-  filter(Survived != "none") %>% 
-  ggplot(aes(Parch)) +
-  geom_bar(aes(fill = Survived)) +
-  facet_wrap(~ Pclass ~ Title) +
-  ylim(0,300) +
-  xlab("Parch") +
-  ylab("Total count") +
-  ggtitle("Survival rate by SibSp, Pclass and Titles")
-  
-# what about family size?
-# is survival dependent on family size?
-# create a new family size variables from train and test data
+rf.test <- train.test[892:1309, c("Sex", "Pclass", "Age_group", "Family_size")]
 
-temp_parch <- c(train$Parch, test$Parch)
-temp_sibsp <- c(train$SibSp, test$SibSp)
+# run prediction on test data
 
-train_test_combined <- train_test_combined %>% 
-  mutate(
-    Family_size = as.factor(temp_parch + temp_sibsp + 1)
-  )
+prediction <- predict(model, rf.test)
 
-# visualise survival by family size 
+# table(prediction)
 
-train_test_combined %>% 
-  filter(Survived != "none") %>% 
-  ggplot(aes(Family_size)) +
-  geom_bar(width = 1, aes(fill = Survived)) +
-  facet_wrap(~ Pclass ~ Title) +
-  xlab("Family Size") +
-  ylab("Total count") +
-  ggtitle("Survival by Family Size by Pclass and Title")
+# create a dataframe of PassengerId and Survived
+# file to be submitted on Kaggle
 
-str(train_test_combined$Ticket)
+submission.file <- data.frame(PassengerId = rep(892:1309), Survived = prediction) 
 
-head(train_test_combined$Ticket, 5)
-
-# ticket_first_char <- if_else(train_test_combined$Ticket == "", " ",
-#                              str_sub(train_test_combined$Ticket, 1, 1))
-
-ticket_first_char2 <- case_when(
-    train_test_combined$Ticket == "" ~ " ",
-    TRUE ~ str_sub(train_test_combined$Ticket, 1,1)
-  )
-
-unique(ticket_first_char2)
-
-train_test_combined <- train_test_combined %>% 
-  mutate(tkt_first_char = as.factor(ticket_first_char2))
-
-
-
+write_csv(submission.file, "Titanic-Randomforest-prediction-2022.csv")
