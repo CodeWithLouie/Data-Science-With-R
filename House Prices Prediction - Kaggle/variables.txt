@@ -1,0 +1,20 @@
+
+# Variables used for prediction
+
+MSZoning
+MSSubClass
+Condition1
+LotArea
+Neighborhood
+HouseStyle
+OverallCond
+BsmtCond
+Electrical
+Bedroom
+Kitchen
+OpenPorchSF
+PoolArea
+Fence
+YrSold
+SaleType
+SaleCondition
