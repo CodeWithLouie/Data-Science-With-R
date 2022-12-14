@@ -113,8 +113,8 @@ augment(lm.model5) %>%
 test$predictions <- predict(lm.model5, newdata = test)
 
 submission.file <- data.frame(
-  Id = 1:1459,
+  Id = 1461:2919,
   SalePrice = test$predictions
 )
 
-file.csv <- write.csv(submission.file, "House_file_prediction_lm.csv")
+write.csv(submission.file, "House_file_prediction_lm.csv", row.names = FALSE)
