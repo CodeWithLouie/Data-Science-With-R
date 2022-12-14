@@ -310,4 +310,5 @@ prediction <- predict(model, rf.test)
 
 submission.file <- data.frame(PassengerId = rep(892:1309), Survived = prediction) 
 
-write_csv(submission.file, "Titanic-Randomforest-prediction-2022.csv")
+write.csv(submission.file, "Titanic-Randomforest-prediction-2022.csv", row.names
+          = FALSE)

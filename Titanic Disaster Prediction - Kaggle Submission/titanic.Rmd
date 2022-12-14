@@ -1,7 +1,7 @@
 ---
 title: "Titanic Disaster Prediction 2022"
 author: "Salisu Mohammed"
-date: "Created `r format(Sys.time(), '%B %d, %Y')`"
+date: "Created on November 22, 2022, Updated on `r format(Sys.time(), '%B %d, %Y')`"
 output: 
   html_document: 
     toc: yes
@@ -18,9 +18,9 @@ editor_options:
   chunk_output_type: inline
 ---
 
-# Predicting Survivability Using RandomForest
+# Predicting Survivability Using RandomForest - First Kaggle Entry
 
-First thing first, let's load the readr and dplyr package
+We begin by loading the necessary packages
 
 ```{r message=FALSE, warning=FALSE}
 library(readr)
@@ -30,7 +30,7 @@ library(ggplot2)
 
 ## The Train data and Test Data
 
-We begin by importing the datasets needed for this analysis
+The train and test data are available on y local computer, I have also included them in the folder of this directory should you need them.
 
 ```{r message=FALSE, warning=FALSE}
 # import the train data
@@ -41,7 +41,7 @@ train <- read_csv("train.csv")
 test <- read_csv("test.csv")
 ```
 
-We are going to be training the `train` data and then run the prediction on the `test` data.
+We will use the `train` data on randomforest and then run the prediction on the `test` data.
 
 ```{r}
 
@@ -53,7 +53,7 @@ glimpse(train)
 
 ```
 
-Add a new Survived column to the `test` data.
+Add a new Survived column to the `test` data. You can do this in different ways, but I choose to use mutate in this case. 
 
 ```{r}
 # add a column using mutate and save as a new variable
@@ -67,7 +67,7 @@ head(test.survived)
 
 ```
 
-Join the `train` and `test.survived` datasets
+Bind the `train` and `test.survived` datasets
 
 ```{r train-test}
 
@@ -77,6 +77,7 @@ head(train.test)
 ```
 
 ### Converting columns to the appropriate class.
+
 
 ```{r}
 # Convert Sex, Pclass, Sex, Survived, SibSp, Parch, Embrked to factors
@@ -138,7 +139,7 @@ ggplot(train.test[1:890, ], aes(Pclass)) +
   ggtitle("Pclass Distribution")
 ```
 
-There are more passengers in third class than any other class
+There are more passengers in third class than any other class which makes sense given the social class of that category.
 
 ```{r Pclass-and-survived, fig.align='center'}
 ggplot(train.test[1:890, ], aes(Pclass, fill = factor(Survived))) +
@@ -148,7 +149,9 @@ ggplot(train.test[1:890, ], aes(Pclass, fill = factor(Survived))) +
   ggtitle("Pclass and Survived")
 ```
 
-Third class has the highest number of casualties.
+Third class has the highest number of casualties. This might be because of the location of the third class cabin, which makes it harder to come to the top. Most of the people down there are either trapped or drown before getting help.
+
+In situations like these, women and children are given more preference. A visual of the age distribution to explore more age related prediction.
 
 ```{r age-distribution, fig.align='center'}
 ggplot(train.test[1:890, ], aes(Age))+
@@ -164,7 +167,7 @@ ggplot(train.test[1:891, ], aes(Age, fill = Survived)) +
   ggtitle("Age and survived")
 ```
 
-Aha! Age is a good predictor. In addition to age, we want to look at the distribution of sex and whether it is also a good predictor.
+Aha! Age is a good predictor. In addition to age, we want to look at the distribution of sex and whether it is also a good predictor. Are females more likely to survive than males? Knowing the answer to question such as this will help us prevent our prediction from model bias.
 
 ```{r sex-distribution, fig.align='center'}
 ggplot(train.test[1:891, ], aes(Sex)) +
@@ -377,7 +380,7 @@ table(prediction)
 
 submission.file <- data.frame(PassengerId = rep(892:1309), Survived = prediction) 
 
-write_csv(submission.file, "Titanic-Randomforest-prediction-2022.csv")
+write.csv(submission.file, "Titanic-Randomforest-prediction-2022.csv")
 
 ```
 
