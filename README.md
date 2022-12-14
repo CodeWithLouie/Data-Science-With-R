@@ -24,4 +24,4 @@ Current interest
 feel free to reach out to me on write.ethereal@gmail.com
 
 
-thanks... ©️2022
+thanks... ©️2022 
