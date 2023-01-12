@@ -1,0 +1,8 @@
+"0","# add a column using mutate and save as a new variable"
+"0",""
+"0","test.survived <- test %>% "
+"0","  mutate("
+"0","    Survived = rep(""none"", nrow(test))"
+"0",")"
+"0",""
+"0","head(test.survived)"

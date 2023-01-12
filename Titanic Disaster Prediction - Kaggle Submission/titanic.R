@@ -192,13 +192,14 @@ ggplot(train.test[1:891, ], aes(Parch, fill = Survived)) +
 
 chAdult_func <- function(x) {
   case_when(
-    x <= 15 ~ "Child", TRUE ~ "Adult"
+    x <= 12 ~ "Child",
+    x >= 13 & x <= 19 ~ "Teenager", TRUE ~ "Adult"
   )
 }
 
-Adult_Child <- NULL #create a null file
+Adult_Child <- c() #create a null file
 
-for (i in 1:nrow(train.test)) {
+for (i in 1:length(train.test$Age)) {
   Adult_Child <- c(Adult_Child, chAdult_func(train.test[i, "Age"]))
 }
 

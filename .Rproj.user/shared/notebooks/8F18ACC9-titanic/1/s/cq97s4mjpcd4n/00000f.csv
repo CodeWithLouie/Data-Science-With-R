@@ -1,0 +1,5 @@
+"0","ggplot(train.test[1:890, ], aes(Pclass, fill = factor(Survived))) +"
+"0","  geom_bar() +"
+"0","  xlab(""Passenger Class"") + "
+"0","  labs(fill = ""Survived"") +"
+"0","  ggtitle(""Pclass and Survived"")"

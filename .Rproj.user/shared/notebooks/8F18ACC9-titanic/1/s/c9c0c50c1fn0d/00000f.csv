@@ -1,0 +1,4 @@
+"0",""
+"0","train.test <- rbind(train, test.survived)"
+"0",""
+"0","head(train.test)"

@@ -1,0 +1,4 @@
+"0","ggplot(train.test[1:891, ], aes(SibSp, fill = Survived)) +"
+"0","  geom_bar() +"
+"0","  ggtitle(""SibSp and Survived"")"
+"0",""

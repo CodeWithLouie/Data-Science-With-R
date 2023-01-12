@@ -17,8 +17,8 @@ me a comment.
 Current interest
 
 1. Quantitative Finance
-2. Fraud Detection
-3. Image detection
+2. Fraud Detection 
+3. Sales and Marketing Analytics
 4. Quality control in food processing plant using machine learning
 
 feel free to reach out to me on write.ethereal@gmail.com

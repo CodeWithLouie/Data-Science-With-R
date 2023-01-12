@@ -1,0 +1,6 @@
+"0","# import the train data"
+"0",""
+"0","train <- read_csv(""train.csv"")"
+"0",""
+"0","# import the test data"
+"0","test <- read_csv(""test.csv"")"

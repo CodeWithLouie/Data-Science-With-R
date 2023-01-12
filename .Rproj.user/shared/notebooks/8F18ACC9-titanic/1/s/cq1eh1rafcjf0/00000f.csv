@@ -1,0 +1,3 @@
+"0","ggplot(train.test[1:890, ], aes(Pclass)) + "
+"0","  geom_bar() +"
+"0","  ggtitle(""Pclass Distribution"")"

@@ -1,0 +1,8 @@
+"0","# create a vector of the sibsp and parch variable and add them together"
+"0",""
+"0","train.temp <- c(train$SibSp, test$SibSp)"
+"0","test.temp <- c(test$Parch, train$Parch)        "
+"0",""
+"0","train.test <- train.test %>% "
+"0","  mutate(Family_size = as.factor(train.temp + test.temp + 1))"
+"0",""

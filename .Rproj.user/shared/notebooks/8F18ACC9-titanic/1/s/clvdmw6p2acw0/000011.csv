@@ -1,0 +1,6 @@
+"0",""
+"0","ggplot(train.test[1:891, ], aes(Age, fill = Survived)) +"
+"0","  geom_histogram() + "
+"0","  facet_wrap(~ Pclass) +"
+"0","  ggtitle(""Age by Pclass and Survived"")"
+"0",""
